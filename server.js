@@ -205,6 +205,13 @@ app.post('/api/inspirations/vocab/:dim', wrap(async (req, res) => {
   res.status(201).json(vocab);
 }));
 
+// replace a dimension's option list — reorder (drag) or remove (✕) from the Upload modal's Edit mode
+app.put('/api/inspirations/vocab/:dim', wrap(async (req, res) => {
+  const vocab = await store.setInspOptions(req.params.dim, req.body && req.body.options);
+  if (!vocab) return res.status(400).json({ error: 'Unknown dimension or bad options' });
+  res.json(vocab);
+}));
+
 app.put('/api/inspirations/:id', wrap(async (req, res) => {
   const ins = await store.updateInspiration(Number(req.params.id), req.body || {});
   if (!ins) return res.status(404).json({ error: 'Inspiration not found' });

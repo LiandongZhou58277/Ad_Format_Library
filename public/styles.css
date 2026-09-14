@@ -318,9 +318,15 @@ a { color: inherit; }
 .um-addtag-plus { display: inline-flex; }
 .um-addtag-plus svg { width: 12px; height: 12px; display: block; }
 /* edit-mode chip with delete ✕ */
-.um-tag-edit { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); padding: 7px 10px; font-size: 11px; font-weight: 500; line-height: 16px; letter-spacing: -0.275px; color: var(--text-3); }
+.um-tag-edit { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); padding: 7px 8px; font-size: 11px; font-weight: 500; line-height: 16px; letter-spacing: -0.275px; color: var(--text-3); cursor: grab; user-select: none; }
 .um-tag-x { border: none; background: none; padding: 0; margin: 0; color: var(--text); font-size: 12px; line-height: 1; cursor: pointer; display: inline-flex; }
 .um-tag-x:hover { color: var(--accent); }
+.um-tag-x svg { width: 12px; height: 12px; display: block; }
+/* edit mode: ⋮⋮ grip to drag-reorder, ✕ to remove */
+.um-tag-grip { display: inline-flex; color: var(--text-3); cursor: grab; }
+.um-tag-grip svg { width: 12px; height: 12px; display: block; }
+.um-tag-edit.dragging { opacity: .4; }
+.um-tag-edit.drag-over { border-color: var(--text-3); }
 /* inline Add-Tag input (per Figma) */
 .um-tag-input { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(0,0,0,0.62); padding: 5px 5px 5px 8px; }
 .um-tag-input-field { border: none; outline: none; background: none; font-family: inherit; font-size: 11px; line-height: 16px; letter-spacing: -0.275px; color: var(--text); width: 72px; padding: 0; }

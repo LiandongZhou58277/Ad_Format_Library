@@ -298,6 +298,16 @@ function addInspOption(dim, name) {
     return Object.fromEntries(INSP_DIMS.map((d) => [d, db.inspVocab[d].slice()]));
   });
 }
+// replace one dimension's option list — covers both reorder (drag) and remove (✕) from the
+// Upload modal's Edit mode. Inspirations already tagged with a removed option keep the value.
+function setInspOptions(dim, options) {
+  if (!INSP_DIMS.includes(dim) || !Array.isArray(options)) return null;
+  const clean = [...new Set(options.map((o) => String(o || '').trim()).filter(Boolean))];
+  return write((db) => {
+    db.inspVocab[dim] = clean;
+    return Object.fromEntries(INSP_DIMS.map((d) => [d, db.inspVocab[d].slice()]));
+  });
+}
 function deleteInspiration(id) {
   return write((db) => {
     const ins = db.inspirations.find((x) => x.id === id);
@@ -341,7 +351,7 @@ module.exports = {
   listFormats, getFormat, createFormat, updateFormat, deleteFormat,
   addVariant, updateVariant, deleteVariant,
   addMedia, setCover, deleteMedia,
-  listInspirations, addInspirations, updateInspiration, deleteInspiration, getInspVocab, addInspOption,
+  listInspirations, addInspirations, updateInspiration, deleteInspiration, getInspVocab, addInspOption, setInspOptions,
   listTags, addTag, deleteTag,
   isEmpty, replaceAll,
 };

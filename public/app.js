@@ -49,6 +49,8 @@ const ICONS = {
   enter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>',
   caret: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
 };
 
 let SECTIONS = ['NewsBreak', 'Inspirations', 'Tools']; // narrowed to ['Inspirations'] in standalone mode (see init)
@@ -513,15 +515,53 @@ function tagPickerSection(initial) {
 
 // Single-select chip picker for one dimension (App / Position / Type) with an inline "+ Add Tag"
 // (Enter or the ↵ button commits; Escape / blank blur cancels; empty names are rejected).
-// Newly added options are persisted to the vocab and immediately available to the filter row.
+// Edit mode (header Edit ⇄ Cancel): chips get a ⋮⋮ grip to drag-reorder and a ✕ to remove; Add Tag
+// is hidden. Every change is persisted to the vocab and immediately visible in the filter row.
 function dimPicker(label, dim, initial) {
   const vocab = () => (state.meta.inspirations || {})[dim] || [];
   let selected = vocab().includes(initial) ? initial : '';
-  let adding = false;
+  let adding = false, editing = false, dragFrom = -1;
+  const head = el('div', { class: 'um-taghead' });
   const row = el('div', { class: 'um-tags' });
+  const putOptions = async (options) => {
+    state.meta.inspirations = await api('/api/inspirations/vocab/' + dim, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ options }) });
+  };
+  const drawHead = () => {
+    head.innerHTML = '';
+    head.append(el('div', { class: 'um-label' }, label));
+    head.append(el('button', { class: 'um-tagedit', onclick: () => { editing = !editing; adding = false; drawHead(); draw(); } }, editing ? 'Cancel' : 'Edit'));
+  };
   const draw = () => {
     row.innerHTML = '';
-    vocab().forEach((o) => row.append(el('button', {
+    const opts = vocab();
+    if (editing) {
+      opts.forEach((o, idx) => {
+        const chip = el('div', { class: 'um-tag-edit', draggable: 'true' },
+          el('span', { class: 'um-tag-grip', html: ICONS.grip }),
+          el('span', {}, o),
+          el('button', { class: 'um-tag-x', title: 'Remove', html: ICONS.x, onclick: async () => {
+            try { await putOptions(opts.filter((x) => x !== o)); } catch (err) { return toast(err.message, true); }
+            if (selected === o) selected = '';
+            draw();
+          } }),
+        );
+        chip.addEventListener('dragstart', (e) => { dragFrom = idx; chip.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+        chip.addEventListener('dragend', () => { chip.classList.remove('dragging'); row.querySelectorAll('.drag-over').forEach((c) => c.classList.remove('drag-over')); });
+        chip.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; chip.classList.add('drag-over'); });
+        chip.addEventListener('dragleave', () => chip.classList.remove('drag-over'));
+        chip.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          const from = dragFrom; dragFrom = -1;
+          if (from < 0 || from === idx) return;
+          const next = opts.slice(); const [moved] = next.splice(from, 1); next.splice(idx, 0, moved);
+          try { await putOptions(next); } catch (err) { return toast(err.message, true); }
+          draw();
+        });
+        row.append(chip);
+      });
+      return;
+    }
+    opts.forEach((o) => row.append(el('button', {
       class: 'um-chip' + (o === selected ? ' active' : ''),
       onclick: () => { selected = selected === o ? '' : o; draw(); },
     }, o)));
@@ -547,8 +587,9 @@ function dimPicker(label, dim, initial) {
       row.append(el('button', { class: 'um-addtag', onclick: () => { adding = true; draw(); } }, el('span', { class: 'um-addtag-plus', html: ICONS.plus }), 'Add Tag'));
     }
   };
+  drawHead();
   draw();
-  return { node: el('div', { class: 'um-section' }, el('div', { class: 'um-label' }, label), row), get: () => selected };
+  return { node: el('div', { class: 'um-section' }, head, row), get: () => selected };
 }
 // App / Position / Type pickers stacked as modal sections
 function inspFieldSet(vals = {}) {
@@ -602,9 +643,10 @@ function openInspirationModal(onDone) {
   };
   document.addEventListener('paste', onPaste);
 
+  // per Figma: dropzone first, then App / Position / Type, then Submit
   const body = el('div', { class: 'um' },
-    fields.node,
     el('div', { class: 'um-drop' }, fileInput, dropzone),
+    fields.node,
     el('div', { class: 'um-foot' }, save),
   );
   save.disabled = true;
