@@ -1,0 +1,22 @@
+{
+  "name": "newsbreak-ad-format-library",
+  "version": "1.0.0",
+  "description": "Internal library of NewsBreak ad formats — browse, add, and edit ad formats and their variants with screenshots and videos.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "restart": "lsof -ti:3000 | xargs kill -9 2>/dev/null; node server.js",
+    "seed": "node seed.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.4",
+    "@vercel/blob": "^2.8.0",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

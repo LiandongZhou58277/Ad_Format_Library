@@ -1,0 +1,24 @@
+node_modules/
+data/*.json
+data/*.tmp
+uploads/*
+!uploads/.gitkeep
+.DS_Store
+*.log
+
+# secrets & local env — never commit (APP_PASSWORD, Blob/Redis tokens live in Vercel env vars)
+.env
+.env.*
+!.env.example
+
+# Vercel CLI link metadata
+.vercel/
+
+# not part of this tool:
+# - newsbreak-local-spotlight is a separate project (its own git repo) that lives in this folder
+# - .claude holds Claude Code machine-local settings
+newsbreak-local-spotlight/
+.claude/
+anime-pool.html
+# legacy demo seeder — calls store APIs removed in the async rewrite; kept locally, not shipped
+seed.js
