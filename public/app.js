@@ -110,10 +110,14 @@ function buildTopNav(activeSection) {
     class: 'tab' + (activeSection === s ? ' active' : ''),
     onclick: () => { state.section = s; if (location.hash) navTo(null); else renderGallery(); },
   }, s)));
+  // standalone mode: the other sections show as disabled "Coming Soon" tabs (per Figma)
+  (state.comingSoon || []).forEach((name) => tabs.append(el('div', { class: 'tab tab-soon' }, name, el('span', { class: 'soon-badge' }, 'Coming Soon'))));
 
   const onInsp = activeSection === 'Inspirations';
+  const standalone = state.meta.mode === 'inspirations';
   const actions = el('div', { class: 'tab-group' },
-    el('button', { class: 'btn-upload', onclick: () => onInsp ? openInspirationModal(() => renderGallery()) : openFormatModal() }, onInsp ? 'Upload' : 'Add Format'),
+    el('button', { class: 'btn-upload', onclick: () => onInsp ? openInspirationModal(() => renderGallery()) : openFormatModal() },
+      onInsp ? (standalone ? 'Upload Format' : 'Upload') : 'Add Format'),
   );
 
   return el('div', { class: 'tabbar' }, tabs, actions);
@@ -1276,7 +1280,7 @@ async function init() {
   try {
     await Promise.all([loadMeta(), loadFormats(), loadTags()]);
     // standalone Inspirations tool (APP_MODE=inspirations): only that section exists
-    if (state.meta.mode === 'inspirations') { SECTIONS = ['Inspirations']; state.section = 'Inspirations'; document.title = 'Inspirations'; }
+    if (state.meta.mode === 'inspirations') { SECTIONS = ['Inspirations']; state.section = 'Inspirations'; state.comingSoon = ['Formats', 'Tools']; document.title = 'Inspirations'; }
     route();
   } catch (e) {
     $('#view').innerHTML = `<div class="empty"><h3>Couldn't reach the server</h3><p>${esc(e.message)}</p></div>`;
